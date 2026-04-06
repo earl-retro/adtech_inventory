@@ -81,6 +81,9 @@
   <!-- ── Main Area ── -->
   <div class="main-area">
     <header class="topbar">
+      <button id="mobile-menu-btn" class="menu-toggle no-print">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
       <h1 class="topbar-title">{% block page_title %}Dashboard{% endblock %}</h1>
       {% block topbar_actions %}{% endblock %}
     </header>
@@ -102,5 +105,10 @@
   </div>
 </div>
 {% block extra_js %}{% endblock %}
+<script>
+  document.getElementById('mobile-menu-btn')?.addEventListener('click', function() {
+    document.querySelector('.sidebar').classList.toggle('open');
+  });
+</script>
 </body>
 </html>
