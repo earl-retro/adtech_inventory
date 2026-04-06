@@ -16,7 +16,7 @@ class User(AbstractUser):
 
     @property
     def is_admin(self):
-        return self.role == 'admin'
+        return self.role == 'admin' or self.is_superuser
 
 
 class AuditLog(models.Model):
