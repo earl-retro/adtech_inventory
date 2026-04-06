@@ -7,7 +7,6 @@ django.setup()
 from django.contrib.auth import get_user_model
 from customers.models import Customer
 from inventory.models import Category, Supplier, Product, StockIn
-from services.models import ServiceRecord
 from sales.models import Sale, SaleItem
 import random
 
