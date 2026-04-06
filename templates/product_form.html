@@ -3,110 +3,111 @@
 {% block page_title %}{{ title }}{% endblock %}
 
 {% block content %}
-<div class="form-container" style="max-width: 800px; margin: 0 auto;">
+<div style="max-width: 800px; margin: 0 auto;">
   <div class="card">
     <div class="card-header">
       <h2 class="card-title">{{ title }}</h2>
-      <p class="text-muted">Fill in the details below to {% if is_edit %}update{% else %}add{% endif %} a product.</p>
     </div>
 
-    <form method="post" enctype="multipart/form-data" class="modern-form">
-      {% csrf_token %}
-      
-      <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-        <div class="form-group" style="grid-column: span 2;">
-          <label for="{{ form.name.id_for_label }}">Product Name</label>
-          {{ form.name }}
-          {% if form.name.errors %}<div class="error-msg">{{ form.name.errors.0 }}</div>{% endif %}
-        </div>
+    <div class="card-body">
+      <p class="text-muted mb-6">Fill in the details below to {% if is_edit %}update{% else %}add{% endif %} a product.</p>
 
-        <div class="form-group">
-          <label for="{{ form.category.id_for_label }}">Category</label>
-          {{ form.category }}
-          {% if form.category.errors %}<div class="error-msg">{{ form.category.errors.0 }}</div>{% endif %}
-        </div>
-
-        <div class="form-group">
-          <label for="{{ form.brand.id_for_label }}">Brand</label>
-          {{ form.brand }}
-          {% if form.brand.errors %}<div class="error-msg">{{ form.brand.errors.0 }}</div>{% endif %}
-        </div>
-
-        <div class="form-group" style="grid-column: span 2;">
-          <label for="{{ form.description.id_for_label }}">Description</label>
-          {{ form.description }}
-          {% if form.description.errors %}<div class="error-msg">{{ form.description.errors.0 }}</div>{% endif %}
-        </div>
-
-        <div class="form-group">
-          <label for="{{ form.cost_price.id_for_label }}">Cost Price (₱)</label>
-          {{ form.cost_price }}
-          {% if form.cost_price.errors %}<div class="error-msg">{{ form.cost_price.errors.0 }}</div>{% endif %}
-        </div>
-
-        <div class="form-group">
-          <label for="{{ form.selling_price.id_for_label }}">Selling Price (₱)</label>
-          {{ form.selling_price }}
-          {% if form.selling_price.errors %}<div class="error-msg">{{ form.selling_price.errors.0 }}</div>{% endif %}
-        </div>
-
-        <div class="form-group">
-          <label for="{{ form.stock_quantity.id_for_label }}">Stock Quantity</label>
-          {{ form.stock_quantity }}
-          {% if form.stock_quantity.errors %}<div class="error-msg">{{ form.stock_quantity.errors.0 }}</div>{% endif %}
-        </div>
-
-        <div class="form-group">
-          <label for="{{ form.reorder_level.id_for_label }}">Low Stock Alert Level</label>
-          {{ form.reorder_level }}
-          {% if form.reorder_level.errors %}<div class="error-msg">{{ form.reorder_level.errors.0 }}</div>{% endif %}
-        </div>
-
-        <div class="form-group" style="grid-column: span 2;">
-          <label for="{{ form.image.id_for_label }}">Product Image</label>
-          {% if product.image %}
-            <div style="margin-bottom: 10px;">
-              <small>Current Image:</small><br>
-              <img src="{{ product.image.url }}" alt="{{ product.name }}" style="height: 100px; border-radius: 8px; margin-top: 5px; border: 1px solid var(--border);">
-            </div>
-          {% endif %}
-          {{ form.image }}
-          <small class="text-muted">Formats: JPG, PNG, WEBP. Max size 2MB.</small>
-          {% if form.image.errors %}<div class="error-msg">{{ form.image.errors.0 }}</div>{% endif %}
-        </div>
-      </div>
-
-      <div class="form-actions" style="margin-top: 30px; display: flex; gap: 12px; border-top: 1px solid var(--border); padding-top: 20px;">
-        <button type="submit" class="btn btn-primary">
-          {% if is_edit %}Update Product{% else %}Create Product{% endif %}
-        </button>
-        <a href="{% url 'store:inventory' %}" class="btn btn-outline" style="background: transparent;">Cancel</a>
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
         
-        {% if is_edit %}
-        <button type="button" class="btn btn-red" style="margin-left: auto;" onclick="confirmDelete()">Delete Product</button>
-        {% endif %}
-      </div>
-    </form>
+        <div class="grid-2">
+          <div class="form-group" style="grid-column: span 2;">
+            <label class="form-label" for="{{ form.name.id_for_label }}">Product Name <span class="required">*</span></label>
+            {{ form.name }}
+            {% if form.name.errors %}<div class="text-red text-sm mt-2">{{ form.name.errors.0 }}</div>{% endif %}
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="{{ form.category.id_for_label }}">Category <span class="required">*</span></label>
+            {{ form.category }}
+            {% if form.category.errors %}<div class="text-red text-sm mt-2">{{ form.category.errors.0 }}</div>{% endif %}
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="{{ form.brand.id_for_label }}">Brand <span class="required">*</span></label>
+            {{ form.brand }}
+            {% if form.brand.errors %}<div class="text-red text-sm mt-2">{{ form.brand.errors.0 }}</div>{% endif %}
+          </div>
+
+          <div class="form-group" style="grid-column: span 2;">
+            <label class="form-label" for="{{ form.description.id_for_label }}">Description</label>
+            {{ form.description }}
+            {% if form.description.errors %}<div class="text-red text-sm mt-2">{{ form.description.errors.0 }}</div>{% endif %}
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="{{ form.cost_price.id_for_label }}">Cost Price (₱) <span class="required">*</span></label>
+            {{ form.cost_price }}
+            {% if form.cost_price.errors %}<div class="text-red text-sm mt-2">{{ form.cost_price.errors.0 }}</div>{% endif %}
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="{{ form.selling_price.id_for_label }}">Selling Price (₱) <span class="required">*</span></label>
+            {{ form.selling_price }}
+            {% if form.selling_price.errors %}<div class="text-red text-sm mt-2">{{ form.selling_price.errors.0 }}</div>{% endif %}
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="{{ form.stock_quantity.id_for_label }}">Stock Quantity <span class="required">*</span></label>
+            {{ form.stock_quantity }}
+            {% if form.stock_quantity.errors %}<div class="text-red text-sm mt-2">{{ form.stock_quantity.errors.0 }}</div>{% endif %}
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="{{ form.reorder_level.id_for_label }}">Low Stock Alert Level <span class="required">*</span></label>
+            {{ form.reorder_level }}
+            {% if form.reorder_level.errors %}<div class="text-red text-sm mt-2">{{ form.reorder_level.errors.0 }}</div>{% endif %}
+          </div>
+
+          <div class="form-group" style="grid-column: span 2;">
+            <label class="form-label" for="{{ form.image.id_for_label }}">Product Image</label>
+            {% if product.image %}
+              <div class="mb-4" style="background:var(--slate-50); padding: 16px; border:1px solid var(--slate-200); border-radius:var(--radius-sm)">
+                <div class="text-sm text-muted mb-2 font-bold">Current Image:</div>
+                <img src="{{ product.image.url }}" alt="{{ product.name }}" style="height: 120px; border-radius: var(--radius-sm); border: 1px solid var(--slate-200); box-shadow: var(--shadow);">
+              </div>
+            {% endif %}
+            {{ form.image }}
+            <div class="text-sm text-muted mt-2">Formats: JPG, PNG, WEBP. Max size 2MB.</div>
+            {% if form.image.errors %}<div class="text-red text-sm mt-2">{{ form.image.errors.0 }}</div>{% endif %}
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="flex-between">
+          <div class="flex gap-3">
+            <button type="submit" class="btn btn-primary">
+              {% if is_edit %}Update Product{% else %}Create Product{% endif %}
+            </button>
+            <a href="{% url "store:inventory" %}" class="btn btn-secondary">Cancel</a>
+          </div>
+          
+          {% if is_edit %}
+          <button type="button" class="btn btn-danger" onclick="confirmDelete()">Delete Product</button>
+          {% endif %}
+        </div>
+      </form>
+    </div>
   </div>
 </div>
 
 {% if is_edit %}
-<form id="delete-form" action="{% url 'store:product_delete' product.pk %}" method="post" style="display:none;">
+<form id="delete-form" action="{% url "store:product_delete" product.pk %}" method="post" style="display:none;">
   {% csrf_token %}
 </form>
 
 <script>
 function confirmDelete() {
-  if (confirm('Are you absolutely sure you want to delete this product? This action cannot be undone.')) {
-    document.getElementById('delete-form').submit();
+  if (confirm("Are you absolutely sure you want to delete this product? This action cannot be undone.")) {
+    document.getElementById("delete-form").submit();
   }
 }
 </script>
 {% endif %}
-
-<style>
-  .modern-form .form-group { margin-bottom: 0; }
-  .modern-form label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-dark); font-size: 0.95rem; }
-  .modern-form .form-control { width: 100%; }
-</style>
 {% endblock %}
