@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}All Orders{% endblock %}
+{% block page_title %}Orders{% endblock %}
+
+{% block content %}
+<div class="table-wrapper">
+  <table>
+    <thead>
+      <tr>
+        <th>Order #</th>
+        <th>Customer</th>
+        <th>User</th>
+        <th>Payment</th>
+        <th>Status</th>
+        {% if user.is_admin %}<th>Total</th>{% endif %}
+        <th>Date</th>
+        <th>Receipt</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for sale in sales %}
+      <tr>
+        <td><span class="font-bold text-red">#{{ sale.id }}</span></td>
+        <td>{{ sale.customer.full_name|default:"Walk-in" }}</td>
+        <td class="text-muted">{{ sale.user.username|default:"-" }}</td>
+        <td><span class="badge badge-slate">{{ sale.payment_method|upper }}</span></td>
+        <td>
+          <span class="badge {% if sale.payment_status == 'completed' %}badge-green{% elif sale.payment_status == 'pending' %}badge-amber{% else %}badge-red{% endif %}">
+            {{ sale.payment_status }}
+          </span>
+        </td>
+        {% if user.is_admin %}<td class="font-bold">₱{{ sale.total|floatformat:2 }}</td>{% endif %}
+        <td class="text-muted">{{ sale.created_at|date:"M d, Y" }}</td>
+        <td><a href="{% url 'store:order_confirm' sale.pk %}" class="btn btn-outline btn-sm">View</a></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="8" class="text-center text-muted" style="padding:40px;">No orders yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

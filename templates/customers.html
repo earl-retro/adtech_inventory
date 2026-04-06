@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Customers{% endblock %}
+{% block page_title %}Customers{% endblock %}
+
+{% block topbar_actions %}
+<a href="{% url 'store:customer_create' %}" class="btn btn-primary btn-sm">
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:15px;height:15px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+  Add Customer
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="table-wrapper">
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Full Name</th>
+        <th>Email</th>
+        <th>Contact</th>
+        <th>Address</th>
+        <th>Orders</th>
+        <th>Since</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in customers %}
+      <tr>
+        <td class="text-muted">{{ c.id }}</td>
+        <td class="font-bold">{{ c.full_name }}</td>
+        <td class="text-muted">{{ c.email|default:"—" }}</td>
+        <td class="text-muted">{{ c.contact_number|default:"—" }}</td>
+        <td class="text-muted">{{ c.address|truncatechars:40|default:"—" }}</td>
+        <td><span class="badge badge-blue">{{ c.sales.count }}</span></td>
+        <td class="text-muted">{{ c.created_at|date:"M d, Y" }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7" class="text-center text-muted" style="padding:40px;">No customers yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

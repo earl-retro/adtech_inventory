@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}{% if user.is_admin %}Control Center{% else %}My Shopping Hub{% endif %}{% endblock %}
+
+{% block topbar_actions %}
+<span class="topbar-badge">
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:13px;height:13px;"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3"/></svg>
+  Live
+</span>
+{% endblock %}
+
+{% block content %}
+
+<!-- Stat Cards -->
+<div class="stats-grid">
+  {% if user.is_admin %}
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#fee2e2;">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="#dc2626"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+    </div>
+    <div>
+      <div class="stat-label">Total Products</div>
+      <div class="stat-value">{{ total_products }}</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#fef3c7;">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="#d97706"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+    </div>
+    <div>
+      <div class="stat-label">Low Stock Alerts</div>
+      <div class="stat-value" style="color:#d97706;">{{ low_stock_count }}</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#dcfce7;">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="#16a34a"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/></svg>
+    </div>
+    <div>
+      <div class="stat-label">Total Revenue</div>
+      <div class="stat-value" style="color:#16a34a;">₱{{ total_revenue|floatformat:0 }}</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#fee2e2;">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="#dc2626"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+    </div>
+    <div>
+      <div class="stat-label">My Total Orders</div>
+      <div class="stat-value">{{ my_orders_count }}</div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+{% if user.is_admin %}
+<div class="grid-2" style="gap:24px; margin-bottom:24px;">
+  <!-- Sales Chart -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">Sales Trend (Last 30 Days)</span></div>
+    <div class="card-body">
+      <canvas id="salesChart" height="120"></canvas>
+    </div>
+  </div>
+
+  <!-- Low Stock Alerts -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Low Stock Items</span>
+      <a href="{% url 'store:inventory' %}" class="btn btn-sm btn-outline">View All</a>
+    </div>
+    <div class="card-body" style="padding:0;">
+      {% if low_stock_items %}
+      <table>
+        <thead><tr><th>Product</th><th>Stock</th><th>Reorder At</th></tr></thead>
+        <tbody>
+          {% for p in low_stock_items %}
+          <tr>
+            <td>{{ p.name|truncatechars:40 }}</td>
+            <td><span class="badge badge-red">{{ p.stock_quantity }}</span></td>
+            <td class="text-muted">{{ p.reorder_level }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state"><p>All products are well-stocked ✓</p></div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Recent Orders -->
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">{% if user.is_admin %}Recent Operations{% else %}My Recent Orders{% endif %}</span>
+    <a href="{% url 'store:order_list' %}" class="btn btn-sm btn-outline">View All</a>
+  </div>
+  <div class="table-wrapper" style="border:none; box-shadow:none; border-radius:0;">
+    <table>
+      <thead>
+        <tr>
+          <th>Order #</th>
+          <th>Customer</th>
+          <th>Payment</th>
+          <th>Status</th>
+          {% if user.is_admin %}<th>Processed By</th><th>Total</th>{% endif %}
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for sale in recent_sales %}
+        <tr>
+          <td><a href="{% url 'store:order_confirm' sale.pk %}" style="color:var(--red);font-weight:600;">#{{ sale.id }}</a></td>
+          <td>{{ sale.customer.full_name|default:"Walk-in" }}</td>
+          <td><span class="badge badge-slate">{{ sale.payment_method|upper }}</span></td>
+          <td>
+            <span class="badge {% if sale.payment_status == 'completed' %}badge-green{% elif sale.payment_status == 'pending' %}badge-amber{% else %}badge-red{% endif %}">
+              {{ sale.payment_status }}
+            </span>
+          </td>
+          {% if user.is_admin %}
+          <td class="text-muted">{{ sale.user.username }}</td>
+          <td class="font-bold">₱{{ sale.total }}</td>
+          {% endif %}
+          <td class="text-muted">{{ sale.created_at|date:"M d, Y" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="{% if user.is_admin %}7{% else %}5{% endif %}" class="text-center text-muted" style="padding:32px;">No orders yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+{% if user.is_admin %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script>
+  const ctx = document.getElementById('salesChart');
+  if (ctx) {
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: {{ sales_chart_labels|safe }},
+        datasets: [{
+          label: 'Revenue (₱)',
+          data: {{ sales_chart_data|safe }},
+          borderColor: '#dc2626',
+          backgroundColor: 'rgba(220,38,38,0.08)',
+          tension: 0.4,
+          fill: true,
+          pointBackgroundColor: '#dc2626',
+          pointRadius: 4,
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+  }
+</script>
+{% endif %}
+{% endblock %}

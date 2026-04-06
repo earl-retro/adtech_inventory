@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block title %}Checkout{% endblock %}
+{% block page_title %}Checkout{% endblock %}
+
+{% block extra_head %}
+{% if paypal_client_id %}
+<script src="https://www.paypal.com/sdk/js?client-id={{ paypal_client_id }}&currency=PHP&intent=capture"></script>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="checkout-layout">
+  <!-- Left: Form -->
+  <div>
+    <form method="post" action="{% url 'store:checkout' %}" id="checkout-form">
+      {% csrf_token %}
+
+      <!-- Customer Details -->
+      <div class="card mb-4">
+        <div class="card-header"><span class="card-title">Customer Information</span></div>
+        <div class="card-body">
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label">Full Name <span class="required">*</span></label>
+              {{ form.full_name }}
+              {% if form.full_name.errors %}<div class="text-red text-sm mt-2">{{ form.full_name.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email Address</label>
+              {{ form.email }}
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label">Contact Number</label>
+              {{ form.contact_number }}
+            </div>
+            <div class="form-group">
+              <label class="form-label">Address</label>
+              {{ form.address }}
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Order Notes</label>
+            {{ form.notes }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Payment Method -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">Payment Method</span></div>
+        <div class="card-body">
+          <div class="alert alert-info">
+            <svg xmlns="http://www.w3.org/2000/svg" style="width:20px; height:20px; margin-right:8px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+            </svg>
+            <span>Secure checkout powered by PayPal. All major cards accepted.</span>
+          </div>
+          
+          <!-- PayPal Buttons -->
+          <div id="paypal-button-container" style="margin-top:20px;"></div>
+          <div id="paypal-status" style="margin-top:10px; font-size:13.5px; color:var(--slate-600); display:none;"></div>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Right: Order Summary -->
+  <div>
+    <div class="order-summary">
+      <h3 style="font-size:15px; font-weight:700; margin-bottom:16px;">Your Order</h3>
+      {% for item in cart %}
+      <div class="order-summary-row">
+        <span style="flex:1; padding-right:8px;">{{ item.product.name|truncatechars:32 }} × {{ item.quantity }}</span>
+        <span style="font-weight:600;">₱{{ item.total_price|floatformat:2 }}</span>
+      </div>
+      {% endfor %}
+      <hr class="divider">
+      <div class="order-summary-total">
+        <span>Total</span>
+        <span style="color:var(--red);" id="cart-total">₱{{ cart.get_total_price|floatformat:2 }}</span>
+      </div>
+      <a href="{% url 'store:cart' %}" class="btn btn-secondary w-full" style="justify-content:center; margin-top:14px;">← Edit Cart</a>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const paypalContainer = document.getElementById('paypal-button-container');
+  const paypalStatus = document.getElementById('paypal-status');
+  const cartTotalStr = "{{ cart_total }}";
+
+  function getCSRFToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]').value;
+  }
+
+  // PayPal Smart Buttons (pure JS, no React)
+  {% if paypal_client_id %}
+  if (typeof paypal !== 'undefined') {
+    paypal.Buttons({
+      createOrder: async function() {
+        paypalStatus.style.display = 'block';
+        paypalStatus.textContent = 'Initialising PayPal order...';
+        const resp = await fetch("{% url 'store:paypal_create' %}", {
+          method: 'POST',
+          headers: { 'X-CSRFToken': getCSRFToken(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        const data = await resp.json();
+        if (data.error) { paypalStatus.textContent = 'Error: ' + data.error; throw new Error(data.error); }
+        paypalStatus.textContent = 'Waiting for PayPal approval...';
+        return data.orderID;
+      },
+      onApprove: async function(data) {
+        paypalStatus.textContent = 'Capturing payment...';
+        // Save checkout form via hidden POST first
+        const formData = new FormData(document.getElementById('checkout-form'));
+        formData.set('payment_method', 'paypal');
+        await fetch("{% url 'store:checkout' %}", { method: 'POST', body: formData });
+
+        const resp = await fetch("{% url 'store:paypal_capture' %}", {
+          method: 'POST',
+          headers: { 'X-CSRFToken': getCSRFToken(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderID: data.orderID })
+        });
+        const result = await resp.json();
+        if (result.success) {
+          paypalStatus.textContent = 'Payment successful! Redirecting...';
+          window.location.href = '/orders/' + result.sale_id + '/';
+        } else {
+          paypalStatus.textContent = 'Capture failed: ' + result.error;
+        }
+      },
+      onCancel: function() { paypalStatus.textContent = 'Payment cancelled.'; },
+      onError: function(err) { paypalStatus.textContent = 'PayPal error: ' + err; }
+    }).render('#paypal-button-container');
+  }
+  {% endif %}
+</script>
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}{{ product.name }}{% endblock %}
+{% block page_title %}Product Detail{% endblock %}
+
+{% block content %}
+<div style="max-width:960px;">
+  <a href="{% url 'store:catalog' %}" class="btn btn-secondary btn-sm mb-4">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:15px;height:15px;"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+    Back to Catalog
+  </a>
+
+  <div class="card" style="overflow:hidden;">
+    <div style="display:grid; grid-template-columns: 380px 1fr; gap:0;">
+      <!-- Image -->
+      <div style="background:var(--slate-50); min-height:360px; display:flex; align-items:center; justify-content:center; border-right:1px solid var(--slate-200);">
+        {% if product.image %}
+          <img src="{{ product.image.url }}" alt="{{ product.name }}" style="width:100%; height:360px; object-fit:cover;">
+        {% else %}
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="var(--slate-200)" style="width:96px;height:96px;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0H3"/></svg>
+        {% endif %}
+      </div>
+
+      <!-- Info -->
+      <div class="card-body">
+        {% if product.category %}<div class="product-category" style="margin-bottom:10px;">{{ product.category.name }}</div>{% endif %}
+        <h2 style="font-size:22px; font-weight:800; color:var(--slate-900); line-height:1.3; margin-bottom:12px;">{{ product.name }}</h2>
+        {% if product.brand %}
+        <p class="text-muted text-sm mb-4">Brand: <strong>{{ product.brand }}</strong></p>
+        {% endif %}
+
+        {% if product.description %}
+        <p style="font-size:14px; color:var(--slate-600); line-height:1.7; margin-bottom:20px;">{{ product.description }}</p>
+        {% endif %}
+
+        <div style="font-size:32px; font-weight:900; color:var(--red); letter-spacing:-.02em; margin-bottom:16px;">
+          ₱{{ product.selling_price|floatformat:2 }}
+        </div>
+
+        <div style="margin-bottom:24px;">
+          {% if product.stock_quantity == 0 %}
+            <span class="badge badge-red" style="font-size:13px; padding:6px 14px;">Out of Stock</span>
+          {% elif product.stock_quantity <= product.reorder_level %}
+            <span class="badge badge-amber" style="font-size:13px; padding:6px 14px;">⚠ Only {{ product.stock_quantity }} left</span>
+          {% else %}
+            <span class="badge badge-green" style="font-size:13px; padding:6px 14px;">✓ In Stock ({{ product.stock_quantity }} available)</span>
+          {% endif %}
+        </div>
+
+        {% if product.stock_quantity > 0 %}
+        <form method="post" action="{% url 'store:cart_add' product.pk %}" style="display:flex; gap:12px; align-items:center;">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <div style="display:flex; align-items:center; border:1.5px solid var(--slate-200); border-radius:8px; overflow:hidden;">
+            <button type="button" onclick="adjustQty(-1)" class="qty-btn">−</button>
+            <input type="number" name="quantity" id="qty" value="1" min="1" max="{{ product.stock_quantity }}" class="qty-display" style="width:56px;">
+            <button type="button" onclick="adjustQty(1)" class="qty-btn">+</button>
+          </div>
+          <button type="submit" class="btn btn-primary" style="padding:12px 28px; font-size:15px;">Add to Cart</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function adjustQty(delta) {
+    const input = document.getElementById('qty');
+    const max = parseInt(input.max);
+    let val = parseInt(input.value) + delta;
+    if (val < 1) val = 1;
+    if (val > max) val = max;
+    input.value = val;
+  }
+</script>
+{% endblock %}

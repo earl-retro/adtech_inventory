@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block title %}Services{% endblock %}
+{% block page_title %}Repair &amp; Service Tracking{% endblock %}
+
+{% block topbar_actions %}
+<button onclick="document.getElementById('new-service-modal').style.display='flex'" class="btn btn-primary btn-sm">
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:15px;height:15px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+  New Service Record
+</button>
+{% endblock %}
+
+{% block content %}
+
+<!-- Status Summary Cards -->
+<div class="stats-grid" style="margin-bottom:24px;">
+  {% for status, color in statuses %}
+  <div class="stat-card">
+    <div class="stat-icon" style="background:{% if status == 'pending' %}#fef3c7{% elif status == 'ongoing' %}#dbeafe{% elif status == 'completed' %}#dcfce7{% else %}#f1f5f9{% endif %};">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="{% if status == 'pending' %}#d97706{% elif status == 'ongoing' %}#2563eb{% elif status == 'completed' %}#16a34a{% else %}#64748b{% endif %}"><circle cx="12" cy="12" r="10"/></svg>
+    </div>
+    <div>
+      <div class="stat-label">{{ status|title }}</div>
+      <div class="stat-value">{{ records|length }}</div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="table-wrapper">
+  <table>
+    <thead>
+      <tr>
+        <th>SR#</th>
+        <th>Customer</th>
+        <th>Device</th>
+        <th>Issue</th>
+        <th>Status</th>
+        <th>Fee</th>
+        <th>Date</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in records %}
+      <tr>
+        <td class="font-bold text-muted">#{{ r.id }}</td>
+        <td class="font-bold">{{ r.customer.full_name }}</td>
+        <td>{{ r.device_brand }} {{ r.device_type }}</td>
+        <td class="text-muted" style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="{{ r.issue_description }}">{{ r.issue_description|truncatechars:40 }}</td>
+        <td>
+          <span class="badge {% if r.service_status == 'pending' %}badge-amber{% elif r.service_status == 'ongoing' %}badge-blue{% elif r.service_status == 'completed' %}badge-green{% else %}badge-slate{% endif %}">
+            {{ r.service_status }}
+          </span>
+        </td>
+        <td class="font-bold" style="color:var(--red);">₱{{ r.service_fee }}</td>
+        <td class="text-muted">{{ r.date_received|date:"M d, Y" }}</td>
+        <td>
+          <form method="post" action="{% url 'store:service_update_status' r.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="status-btn status-{{ r.service_status }}">
+              {% if r.service_status == 'pending' %}→ Ongoing
+              {% elif r.service_status == 'ongoing' %}→ Completed
+              {% elif r.service_status == 'completed' %}→ Claimed
+              {% else %}↻ Reopen{% endif %}
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="8" class="text-center text-muted" style="padding:40px;">No service records yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- New Service Modal -->
+<div class="modal-overlay" id="new-service-modal" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">New Service Record</span>
+      <button class="modal-close" onclick="document.getElementById('new-service-modal').style.display='none'">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:16px;height:16px;"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <form method="post" action="{% url 'store:service_create' %}">
+      {% csrf_token %}
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Customer <span class="required">*</span></label>
+          {{ form.customer }}
+          {% if form.customer.errors %}<div class="text-red text-sm mt-2">{{ form.customer.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label">Device Type <span class="required">*</span></label>
+            {{ form.device_type }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Brand</label>
+            {{ form.device_brand }}
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label">Model</label>
+            {{ form.device_model }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Serial No.</label>
+            {{ form.serial_number }}
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Issue Description <span class="required">*</span></label>
+          {{ form.issue_description }}
+          {% if form.issue_description.errors %}<div class="text-red text-sm mt-2">{{ form.issue_description.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Service Fee (₱)</label>
+          {{ form.service_fee }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Internal Notes</label>
+          {{ form.notes }}
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('new-service-modal').style.display='none'">Cancel</button>
+        <button type="submit" class="btn btn-primary">Create Record</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Re-open modal if form errors exist (errors come back via Django messages)
+  {% if form.errors %}
+  document.getElementById('new-service-modal').style.display = 'flex';
+  {% endif %}
+</script>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Inventory{% endblock %}
+{% block page_title %}Inventory Management{% endblock %}
+
+{% block topbar_actions %}
+{% if user.is_admin %}
+<a href="{% url 'store:product_create' %}" class="btn btn-primary btn-sm">
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:15px;height:15px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+  Add Product
+</a>
+{% endif %}
+<a href="{% url 'store:stock_in' %}" class="btn btn-outline btn-sm">
+  Stock In
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="table-wrapper">
+  <table>
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th>Category</th>
+        <th>Brand</th>
+        <th>Cost Price</th>
+        <th>Sell Price</th>
+        <th>Stock</th>
+        <th>Reorder At</th>
+        <th>Status</th>
+        {% if user.is_admin %}<th>Action</th>{% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in products %}
+      <tr>
+        <td>
+          <div style="font-weight:600; color:var(--slate-900);">{{ p.name|truncatechars:50 }}</div>
+        </td>
+        <td class="text-muted">{{ p.category.name|default:"—" }}</td>
+        <td class="text-muted">{{ p.brand|default:"—" }}</td>
+        <td>₱{{ p.cost_price|floatformat:2 }}</td>
+        <td class="font-bold" style="color:var(--red);">₱{{ p.selling_price|floatformat:2 }}</td>
+        <td>
+          <div class="stock-level">
+            <div class="stock-bar">
+              {% if p.stock_quantity == 0 %}
+                <div class="stock-bar-fill critical" style="width:100%;"></div>
+              {% elif p.id in low_ids %}
+                <div class="stock-bar-fill low" style="width:{% widthratio p.stock_quantity p.reorder_level 100 %}%;"></div>
+              {% else %}
+                <div class="stock-bar-fill" style="width:100%;"></div>
+              {% endif %}
+            </div>
+            <span class="font-bold {% if p.stock_quantity == 0 %}text-red{% elif p.id in low_ids %}text-amber{% endif %}">
+              {{ p.stock_quantity }}
+            </span>
+          </div>
+        </td>
+        <td class="text-muted">{{ p.reorder_level }}</td>
+        <td>
+          {% if p.stock_quantity == 0 %}
+            <span class="badge badge-red">Out of Stock</span>
+          {% elif p.id in low_ids %}
+            <span class="badge badge-amber">Low Stock</span>
+          {% else %}
+            <span class="badge badge-green">In Stock</span>
+          {% endif %}
+        </td>
+        {% if user.is_admin %}
+        <td>
+          <a href="{% url 'store:product_edit' p.pk %}" class="btn btn-outline btn-xs">Edit</a>
+        </td>
+        {% endif %}
+      </tr>
+      {% empty %}
+      <tr><td colspan="8" class="text-center text-muted" style="padding:40px;">No products found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

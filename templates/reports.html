@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block page_title %}Revenue Reports{% endblock %}
+
+{% block content %}
+<div class="stats-grid mb-6">
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#dcfce7;">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="#16a34a"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/></svg>
+    </div>
+    <div>
+      <div class="stat-label">Total Revenue</div>
+      <div class="stat-value" style="color:#16a34a;">₱{{ total_revenue|floatformat:0 }}</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#dbeafe;">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="#2563eb"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+    </div>
+    <div>
+      <div class="stat-label">Completed Orders</div>
+      <div class="stat-value">{{ total_orders }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="grid-2" style="gap:24px;">
+  <div class="card">
+    <div class="card-header"><span class="card-title">Revenue by Payment Method</span></div>
+    <div class="card-body">
+      <canvas id="methodChart" height="200"></canvas>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">Recent Completed Orders</span></div>
+    <div class="card-body" style="padding:0;">
+      <table>
+        <thead><tr><th>#</th><th>Customer</th><th>Method</th><th>Total</th><th>Date</th></tr></thead>
+        <tbody>
+          {% for s in recent_sales %}
+          <tr>
+            <td><a href="{% url 'store:order_confirm' s.pk %}" class="font-bold text-red">#{{ s.id }}</a></td>
+            <td>{{ s.customer.full_name|default:"Walk-in" }}</td>
+            <td><span class="badge badge-slate">{{ s.payment_method|upper }}</span></td>
+            <td class="font-bold">₱{{ s.total|floatformat:2 }}</td>
+            <td class="text-muted">{{ s.created_at|date:"M d" }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" class="text-center text-muted" style="padding:24px;">No data.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script>
+  const byMethod = {{ by_method|safe }};
+  new Chart(document.getElementById('methodChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Cash', 'PayPal'],
+      datasets: [{
+        data: [byMethod.cash || 0, byMethod.paypal || 0],
+        backgroundColor: ['#0f172a', '#dc2626'],
+        borderWidth: 0,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'bottom', labels: { font: { weight: '700', size: 12 }, padding: 20 } } }
+    }
+  });
+</script>
+{% endblock %}
