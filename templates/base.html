@@ -71,7 +71,7 @@
         <div class="user-avatar">{{ user.username|slice:":1"|upper }}</div>
         <div>
           <div class="user-name">{{ user.username }}</div>
-          <div class="user-role">{{ user.role }}</div>
+          <div class="user-role">{% if user.is_admin %}ADMIN{% else %}USER{% endif %}</div>
         </div>
         <a href="{% url 'store:logout' %}" class="logout-btn">Sign out</a>
       </div>
